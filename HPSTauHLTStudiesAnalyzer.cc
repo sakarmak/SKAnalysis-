@@ -150,9 +150,9 @@ class HPSTauHLTStudiesAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedRes
       TH1D *trackPt;
       TH1D *TauDz;
       TH1D *TauDxy;
-      TH2D *histo_Dz_Pt;
-      TH2D *histo_Dxy_Pt;
-      TH2D *histo_Dxy_Dz;
+      TH2D *h1;
+      TH2D *h2;
+      TH2D *h3;
       double event;
       int i=0;
       float run, lumi, nTruePU, nvtx, nvtxCleaned, passingTaus, passingMuons, nVetoMuons, nSlimmedMuons,
@@ -420,8 +420,8 @@ HPSTauHLTStudiesAnalyzer::HPSTauHLTStudiesAnalyzer(const edm::ParameterSet& iCon
    TFileDirectory subDir = fs->mkdir( "tagAndProbe" );
    nEvents = subDir.make<TH1D>("nEvents","nEvents",1,-0.5,0.5);
    cutFlow = subDir.make<TH1D>("cutFlow","cutFlow",10,-0.5,9.5);
-    histo_Dz_Pt = subDir.make<TH2D>("pt_dZ","pt_dZ",100,-0.12,0.12,100,0.,40.);
-    histo_Dxy_Pt = subDir.make<TH2D>("pt_dxy","pt_dxy",100,-0.4,0.4,100,0.,40.);
+    h1 = subDir.make<TH2D>("pt_dZ","pt_dZ",100,-0.12,0.12,100,0.,40.);
+    h2 = subDir.make<TH2D>("pt_dxy","pt_dxy",100,-0.4,0.4,100,0.,40.);
     trackPt = subDir.make<TH1D>("trackpt","trackpt",100,0.,20.);
     TauDz = subDir.make<TH1D>("TauDz","TauDz",100,-0.3,0.3);
     TauDxy = subDir.make<TH1D>("TauDxy","TauDxy",100,-0.5,0.5);
@@ -1264,22 +1264,33 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
                 float iso = 0.f;
                 for(vector<reco::TrackBaseRef>::const_iterator tr = pv->tracks_begin(); tr != pv->tracks_end(); ++tr) {
                     //l2p5TrackPt = (*tr)->pt();
-                    trackPt->Fill((*tr)->pt());
-		    TauDz->Fill((*tr)->dz(pv->position()));
-		    TauDxy->Fill((*tr)->dxy(*hltBeamSpot));
-		    histo_Dz_Pt->Fill((*tr)->dz(pv->position()), (*tr)->pt());
-		    histo_Dxy_Pt->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
-		    
+                    //trackPt->Fill((*tr)->pt());
+		    //TauDz->Fill((*tr)->dz(pv->position()));
+		    //TauDxy->Fill((*tr)->dxy(*hltBeamSpot));
+		    //h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
+		    //h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
+		//	std::cout<<"TrackPt="<<l2p5TrackPt<<std::endl;
+		    //l2p5TauDZ = (*tr)->dz(pv->position());
+		    //l2p5TauDxy = (*tr)->dxy(*hltBeamSpot);
 		    if ((*tr)->pt() < m_trackMinPt) continue;
                     if ((*tr)->numberOfValidHits() < m_trackMinNHits) continue;
                     if ((*tr)->normalizedChi2() > m_trackMaxNChi2) continue;
                     if (std::abs( (*tr)->dxy(*hltBeamSpot) ) > m_trackMaxDxy) continue;
-                    
-		    float dr2 = deltaR2 (caloTau_eta, caloTau_phi, (*tr)->eta(), (*tr)->phi());
+  		     //h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
+                     //h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
+	
+                    float dr2 = deltaR2 (caloTau_eta, caloTau_phi, (*tr)->eta(), (*tr)->phi());
   
                     // sum pT based isolation
                     if (dr2 >= m_isoCone2Min && dr2 <= m_isoCone2Max) iso += (*tr)->pt();
                       
+		    if (dr2 >= m_isoCone2Min && dr2 <= m_isoCone2Max){
+		    trackPt->Fill((*tr)->pt());
+		    TauDz->Fill((*tr)->dz(pv->position()));
+		    TauDxy->Fill((*tr)->dxy(*hltBeamSpot));
+		    h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
+		    h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
+		  }
 		}
                 // Compare with online produced isolation value to check we do this correct
                 // Copying access methods from here:
