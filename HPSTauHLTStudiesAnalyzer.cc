@@ -153,8 +153,27 @@ class HPSTauHLTStudiesAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedRes
       TH2D *h1;
       TH2D *h2;
       TH2D *h3;
+      TH1D *trackPt_allTracks;
+      TH1D *TauDz_allTracks;
+      TH1D *TauDxy_allTracks;
+      TH2D *h1_allTracks;
+      TH2D *h2_allTracks;
+      TH1D *Dxy_allTracks1;
+      TH1D *Dxy_allTracks2;
+      TH1D *Dxy_allTracks3;
+      TH1D *dz_allTracks1;
+      TH1D *dz_allTracks2;
+      TH1D *dz_allTracks3;
+      TH1D *zeroPt_allTracks;
+      TH1D *zeroPt_Tracks;
+      TH1D *h_event_wo_pv;
+      TH1D *h_event_with_pv;
+      TH1D *h_taus_wo_pv;
+      TH1D *h_taus_with_pv;
+//      TH2D *h3_allTracks;
+
       double event;
-      int i=0;
+      int i=0,NTracks;
       float run, lumi, nTruePU, nvtx, nvtxCleaned, passingTaus, passingMuons, nVetoMuons, nSlimmedMuons,
         mPt, mEta, mPhi, mIso,
         tmpPt, tmpEta, tmpPhi, tmpIso,
@@ -175,10 +194,10 @@ class HPSTauHLTStudiesAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedRes
         hpsTauSize, hpsTauPt, hpsTauEta, hpsTauPhi, hpsTauDM, hpsTauDMFinding, hpsTauDR, hpsTauChrgIso, hpsTauDRDefault,
         hpsTau2Pt, hpsTau2Eta, hpsTau2Phi, hpsTau2DM,
         l2p5TauSize, l2p5TauPt, l2p5TauEta, l2p5TauPhi, l2p5TauDR, l2p5TauOnlineIso, l2p5TauOfflineIso, l2p5TauOfflineIso2,
-        l2p5TauOfflineIsoNew1, l2p5TauOfflineIsoNew2, l2p5TauOfflineIsoNew3,l2p5TauDZ,l2p5TauDxy,l2p5TrackPt,
+        l2p5TauOfflineIsoNew1, l2p5TauOfflineIsoNew2, l2p5TauOfflineIsoNew3,l2p5TauDZ,l2p5TauDxy,l2p5TrackPt, TrackDxy,
         defaultTauSize, defaultTauPt, defaultTauEta, defaultTauPhi, 
         defaultTauDM, defaultTauDMFinding, defaultTauDR, defaultTauChrgIso,
-        defaultTau2Pt, defaultTau2Eta, defaultTau2Phi, defaultTau2DM;
+        defaultTau2Pt, defaultTau2Eta, defaultTau2Phi, defaultTau2DM, l2p5TauSizePV;
       bool foundGenTau, foundGenMuon; 
       std::map<std::string, int*> triggers;
       std::map<std::string, int>::iterator triggerIterator;
@@ -422,9 +441,28 @@ HPSTauHLTStudiesAnalyzer::HPSTauHLTStudiesAnalyzer(const edm::ParameterSet& iCon
    cutFlow = subDir.make<TH1D>("cutFlow","cutFlow",10,-0.5,9.5);
     h1 = subDir.make<TH2D>("pt_dZ","pt_dZ",100,-0.12,0.12,100,0.,40.);
     h2 = subDir.make<TH2D>("pt_dxy","pt_dxy",100,-0.4,0.4,100,0.,40.);
+    h3 = subDir.make<TH2D>("pt_dR","pt_dR",100,0,0.4,100,0.,40.);
     trackPt = subDir.make<TH1D>("trackpt","trackpt",100,0.,20.);
     TauDz = subDir.make<TH1D>("TauDz","TauDz",100,-0.3,0.3);
     TauDxy = subDir.make<TH1D>("TauDxy","TauDxy",100,-0.5,0.5);
+    trackPt_allTracks = subDir.make<TH1D>("trackpt_allTracks","trackpt_allTracks",100,0.,20.);
+    TauDz_allTracks = subDir.make<TH1D>("TauDz_allTracks","TauDz_allTracks",100,-0.3,0.3);
+    TauDxy_allTracks = subDir.make<TH1D>("TauDxy_allTracks","TauDxy_allTracks",100,-0.5,0.5);
+    h1_allTracks = subDir.make<TH2D>("pt_dZ_allTracks","pt_dZ_allTracks",100,-0.12,0.12,100,0.,60.);
+    h2_allTracks = subDir.make<TH2D>("pt_dxy_allTracks","pt_dxy_allTracks",100,-0.4,0.4,100,0.,60.);
+    Dxy_allTracks1 = subDir.make<TH1D>("Dxy_nvtx_le_25","Dxy_nvtx_le_25",100,-0.5,0.5);
+    Dxy_allTracks2 = subDir.make<TH1D>("Dxy_nvtx_lt_25_ge_50","Dxy_nvtx_lt_25_ge_50",100,-0.5,0.5);
+    Dxy_allTracks3 = subDir.make<TH1D>("Dxy_nvtx_gt_50","Dxy_nvtx_gt_50",100,-0.5,0.5);
+    dz_allTracks2 = subDir.make<TH1D>("dz_nvtx_lt_25_ge_50","Dxy_nvtx_lt_25_ge_50",100,-0.4,0.4);
+    dz_allTracks3 = subDir.make<TH1D>("dz_nvtx_gt_50","dz_nvtx_gt_50",100,-0.4,0.4);
+    dz_allTracks1 = subDir.make<TH1D>("dz_nvtx_le_25","dz_nvtx_le_25",100,-0.4,0.4);
+    zeroPt_allTracks = subDir.make<TH1D>("zeroPtAllTracks","zeroPtAllTracks",3,0,3);
+    zeroPt_Tracks  = subDir.make<TH1D>("zeroPtTracks","zeroPtTracks",3,0,3);  
+    h_event_wo_pv = subDir.make<TH1D>("event_wo_pv", "event_wo_pv", 3,0.,3.);
+    h_event_with_pv = subDir.make<TH1D>("event_with_pv", "event_with_pv", 3,0.,3.);
+    h_taus_wo_pv = subDir.make<TH1D>("taus_wo_pv", "taus_wo_pv", 3,0.,3.);
+    h_taus_with_pv = subDir.make<TH1D>("taus_with_pv", "taus_with_pv", 3,0.,3.);
+
     tree = subDir.make<TTree>("Ntuple","My T-A-P Ntuple");
     tree2 = subDir.make<TTree>("Ntuple2","My T-A-P Ntuple2");
    tree->Branch("RunNumber",&run,"RunNumber/F");
@@ -542,6 +580,8 @@ HPSTauHLTStudiesAnalyzer::HPSTauHLTStudiesAnalyzer(const edm::ParameterSet& iCon
    tree->Branch("nBTagAll",&nBTagAll,"nBTagAll/F");
    tree->Branch("emptyVertices",&emptyVertices,"emptyVertices/F");
    tree->Branch("failNdof",&failNdof,"failNdof/F");
+   tree->Branch("NTracks",&NTracks,"NTracks/I");
+   tree->Branch("TrackDxy",&TrackDxy,"TrackDxy/F");
 
    tree->Branch("HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1",                   &HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1,                  "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1/I");
    tree->Branch("HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1",                   &HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1,                  "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1/I");
@@ -843,9 +883,9 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
         if (!doTauTau) // For TauTau only require looser selection, but MuTau is tighter
             if (tauCandidate->tauID("againstMuonTight3") < 0.5) continue;
         
-        // Require the loosest isolation WPs used by Tau POG
+/*        // Require the loosest isolation WPs used by Tau POG
         // or require MVA Medium if requireMediumTauMVA selected
-/*        if (requireMediumTauMVA) {
+        if (requireMediumTauMVA) {
             if (tauCandidate->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") < 0.5) continue;
         }
         else {
@@ -1203,7 +1243,8 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
     // https://github.com/cms-sw/cmssw/blob/master/RecoTauTag/HLTProducers/src/L2TauPixelIsoTagProducer.cc#L72
     const reco::Vertex *pv = nullptr;
     if (l2p5Vertices.isValid()) {
-        //for (size_t iVert = 0; iVert != l2p5Vertices->size(); ++iVert) {
+       // for (size_t iVert = 0; iVert != l2p5Vertices->size(); ++iVert) {
+	 //if(hltBeamSpot.isValid()) TauDxy_allTracks->Fill((*iVert)->dxy(*hltBeamSpot));
         //    reco::VertexRef vertexRef(l2p5Vertices, iVert);
         //    std::cout << "vertexRef: " << iVert << " (x,y,z): " << vertexRef->position() << std::endl;
         //    std::cout << "vertexRef: " << iVert << " p4: " << vertexRef->p4() << std::endl;
@@ -1242,6 +1283,25 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
     l2p5TauOfflineIsoNew1 = -1.f;
     l2p5TauOfflineIsoNew2 = -1.f;
     l2p5TauOfflineIsoNew3 = -1.f;
+
+//Try to find events with and without PV
+    if (l2p5Taus.isValid() && !pv && l2p5Taus->size()>0){
+      h_event_wo_pv->Fill(1.); 
+      l2p5TauSizePV = l2p5Taus->size();
+      for (size_t itau = 0; itau != l2p5TauSizePV; ++itau){
+	h_taus_wo_pv->Fill(1.);
+       }
+    }
+
+    if (l2p5Taus.isValid() && pv && l2p5Taus->size()>0){
+      h_event_with_pv->Fill(1.);
+      l2p5TauSizePV = l2p5Taus->size();
+      for (size_t itau = 0; itau != l2p5TauSizePV; ++itau){
+        h_taus_with_pv->Fill(1.);
+       }
+    }
+
+
     if (l2p5Taus.isValid() && l2p5Tracks.isValid() && hltBeamSpot.isValid() && pv && l2p5Taus->size()>0) {
 
         l2p5TauSize = l2p5Taus->size();
@@ -1260,37 +1320,60 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
             float tmp_dr = reco::deltaR(caloTau_eta,caloTau_phi,passingTausV.at(0)->eta(),passingTausV.at(0)->phi());
             if (tmp_dr < 0.3 ) {
 
+		//try to consider all tracks
+	//	for(vector<reco::TrackBaseRef>::const_iterator tr1 = tracks_begin(); tr1 != tracks_end(); ++tr1){
+	//	   TauDxy_allTracks->Fill((*tr1)->dxy(*hltBeamSpot));
+        //
+	//	}
+
+
                 // to calculate isolation, use only tracks that were assigned to the vertex
                 float iso = 0.f;
+		int n_tracks = 0;
+                float track_dxy = 0.;
                 for(vector<reco::TrackBaseRef>::const_iterator tr = pv->tracks_begin(); tr != pv->tracks_end(); ++tr) {
-                    //l2p5TrackPt = (*tr)->pt();
-                    //trackPt->Fill((*tr)->pt());
-		    //TauDz->Fill((*tr)->dz(pv->position()));
-		    //TauDxy->Fill((*tr)->dxy(*hltBeamSpot));
-		    //h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
-		    //h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
-		//	std::cout<<"TrackPt="<<l2p5TrackPt<<std::endl;
-		    //l2p5TauDZ = (*tr)->dz(pv->position());
-		    //l2p5TauDxy = (*tr)->dxy(*hltBeamSpot);
+                    trackPt_allTracks->Fill((*tr)->pt());
+		    TauDz_allTracks->Fill((*tr)->dz(pv->position()));
+		    TauDxy_allTracks->Fill((*tr)->dxy(*hltBeamSpot));
+		    h1_allTracks->Fill((*tr)->dz(pv->position()), (*tr)->pt());
+		    h2_allTracks->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
+
+		    if( (*tr)->pt()==0){zeroPt_allTracks->Fill(1.);}
+                         
+                    if( nvtx<=25 ){Dxy_allTracks1->Fill((*tr)->dxy(*hltBeamSpot));}
+		    if( nvtx >25 && nvtx <=50 ){Dxy_allTracks2->Fill((*tr)->dxy(*hltBeamSpot));}
+		    if( nvtx >50 ){Dxy_allTracks3->Fill((*tr)->dxy(*hltBeamSpot));}
+
+		    if( nvtx<=25){dz_allTracks1->Fill((*tr)->dz(pv->position()));}
+		    if( nvtx >25 && nvtx <=50 ){dz_allTracks2->Fill((*tr)->dz(pv->position()));}
+                    if( nvtx >50){dz_allTracks3->Fill((*tr)->dz(pv->position()));}
+
 		    if ((*tr)->pt() < m_trackMinPt) continue;
                     if ((*tr)->numberOfValidHits() < m_trackMinNHits) continue;
                     if ((*tr)->normalizedChi2() > m_trackMaxNChi2) continue;
                     if (std::abs( (*tr)->dxy(*hltBeamSpot) ) > m_trackMaxDxy) continue;
-  		     //h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
-                     //h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
-	
-                    float dr2 = deltaR2 (caloTau_eta, caloTau_phi, (*tr)->eta(), (*tr)->phi());
+
+	            float dr = deltaR(caloTau_eta, caloTau_phi, (*tr)->eta(), (*tr)->phi());
+                     h3->Fill(dr, (*tr)->pt());
+
+                    float dr2 = deltaR2(caloTau_eta, caloTau_phi, (*tr)->eta(), (*tr)->phi());
   
                     // sum pT based isolation
                     if (dr2 >= m_isoCone2Min && dr2 <= m_isoCone2Max) iso += (*tr)->pt();
                       
 		    if (dr2 >= m_isoCone2Min && dr2 <= m_isoCone2Max){
+                    
 		    trackPt->Fill((*tr)->pt());
 		    TauDz->Fill((*tr)->dz(pv->position()));
 		    TauDxy->Fill((*tr)->dxy(*hltBeamSpot));
 		    h1->Fill((*tr)->dz(pv->position()), (*tr)->pt());
 		    h2->Fill((*tr)->dxy(*hltBeamSpot), (*tr)->pt());
-		  }
+		    
+		    n_tracks = n_tracks+1;
+		    track_dxy = (*tr)->dxy(*hltBeamSpot);
+                    
+		  }	
+		 TrackDxy = track_dxy;
 		}
                 // Compare with online produced isolation value to check we do this correct
                 // Copying access methods from here:
@@ -1361,8 +1444,7 @@ HPSTauHLTStudiesAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetu
                 l2p5TauOfflineIsoNew1 = iso_offlineNew1;
                 l2p5TauOfflineIsoNew2 = iso_offlineNew2;
 		l2p5TauOfflineIsoNew3 = iso_offlineNew3;
-//		h1->Fill(l2p5TauDZ,l2p5TauPt);
-//		h2->Fill(l2p5TauDxy,l2p5TauPt);
+		NTracks = n_tracks;
                 break;
             }
         }
